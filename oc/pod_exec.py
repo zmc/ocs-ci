@@ -17,6 +17,8 @@ dispatcher class Exec.
 from collections import namedtuple
 import logging
 
+from Exceptions import CommandFailed
+
 # Upstream KubernetesClient
 from kubernetes import config
 from kubernetes.client import Configuration
@@ -39,7 +41,8 @@ CmdObj = namedtuple('CmdObj', [
     'cmd',
     'timeout',
     'wait',
-    'check_ec'
+    'check_ec',
+    'long_running',
     ])
 
 
@@ -121,10 +124,16 @@ class KubClient(object):
                       stdout=True, tty=False,
                       _preload_content=False)
         done = False
+        outbuf = ''
         while resp.is_open():
             resp.update(timeout=1)
             if resp.peek_stdout():
-                stdout = resp.read_stdout(timeout=60)
+                stdout = resp.read_stdout(timeout=cmd_obj.timeout)
+                outbuf = outbuf + stdout
+                if cmd_obj.long_running:
+                    while resp.peek_stdout(timeout=cmd_obj.timeout):
+                        stdout = resp.read_stdout(timeout=cmd_obj.timeout)
+                        outbuf = outbuf + stdout
             if resp.peek_stderr():
                 stderr = resp.read_stderr(timeout=60)
             if not done:
@@ -133,9 +142,23 @@ class KubClient(object):
                 done = True
             else:
                 break
+        """
+        Couple of glitches in capturing return value.
+        Rest api doesn't return ret value of the command
+        hence this workaround.
+        we can fix this once we have facility to capture err code
+        """
         if cmd_obj.check_ec:
             resp.write_stdin("echo $?\n")
-            ret = int(resp.readline_stdout(timeout=5))
+            try:
+                ret = int(resp.readline_stdout(timeout=5))
+            except (ValueError, TypeError):
+                logger.error("TimeOut: Command timedout after {}".format(cmd_obj.timeout))
+                raise CommandFailed(" Failed to run \"{cmd}\"".
+                                    format(cmd=cmd_obj.cmd))
+
         resp.close()
+        if outbuf:
+            stdout = outbuf
 
         return (stdout, stderr, ret)

@@ -16,7 +16,7 @@ def main():
         break
     cmd = "ceph osd df"
     po = pod.Pod(name, namespace)
-    out, err, ret = po.exec_command(cmd=cmd)
+    out, err, ret = po.exec_command(cmd=cmd, timeout=20)
     if out:
         print (out)
     if err:

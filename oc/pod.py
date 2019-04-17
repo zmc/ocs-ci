@@ -9,6 +9,7 @@ Few assumptions:
 import logging
 
 from .pod_exec import Exec, CmdObj
+from Exceptions import CommandFailed
 
 logger = logging.getLogger(__name__)
 
@@ -79,12 +80,16 @@ class Pod(object):
         timeout = kw.get('timeout', 60)
         wait = kw.get('wait', True)         # default synchronous execution
         check_ec = kw.get('check_ec', True)
+        long_running = kw.get('long_running', False)
 
-        cmd_obj = CmdObj(cmd, timeout, wait, check_ec)
+        cmd_obj = CmdObj(cmd, timeout, wait, check_ec, long_running)
         runner = Exec()
-        stdout, stderr, err = runner.run(self.name,
-                                         self.namespace,
-                                         cmd_obj)
+        try:
+            stdout, stderr, err = runner.run(self.name,
+                                             self.namespace,
+                                             cmd_obj)
+        except CommandFailed:
+            raise
 
         if check_ec:
             return (stdout, stderr, err)
