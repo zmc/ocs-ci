@@ -12,6 +12,14 @@ import oc.openshift_ops as ac
 from ocs.pod import Pod
 import ocs.defaults as default
 
+import os
+from utility import templating
+import yaml
+
+from kubernetes import config
+from openshift.dynamic import DynamicClient
+from utility.utils import run_cmd
+
 logger = logging.getLogger(__name__)
 
 
@@ -138,3 +146,24 @@ class RookCluster(object):
         """
 
         return self._api_client.get_labels(pod_name, namespace)
+
+
+    def create_cephfs(self,cluster_path,fs_data):
+        """
+        Create a new Ceph File System
+        """
+        template_name = "filesystem.yaml"
+        _templating = templating.Templating(base_path=os.path.join(templating.TOP_DIR, 'templates/ocs-deployment/'))
+        logger.info('creating cephfs')
+        template = _templating.render_template("filesystem.yaml", fs_data)
+        fs_service_data = yaml.safe_load(template)
+        k8s_client = config.new_client_from_config(config_file=cluster_path+'/auth/kubeconfig')
+        dyn_client = DynamicClient(k8s_client)
+        cfg_file = os.path.join(cluster_path, template_name)
+        with open(cfg_file, "w") as f:
+            f.write(template)
+        client = dyn_client.resources.get(api_version='v1', kind=fs_service_data.get('kind'))
+        client.create(body=fs_service_data, namespace=fs_service_data.get('metadata').get('namespace'))
+        logger.info('checking if filesystem is created')
+        run_cmd(f"oc get {fs_service_data.get('kind')} {fs_service_data.get('metadata').get('name')} -n {fs_service_data.get('metadata').get('namespace')}")
+        return 0
