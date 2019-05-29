@@ -22,7 +22,9 @@ It is recommended that you use a python virtual environment to install the neces
     * `python3.7 -m venv <path/to/venv>`
     * `source <path/to/.venv>/bin/activate`
 
-2. Install requirements with `pip install -r requirements.txt`
+2. Upgrade pip with `pip install --upgrade pip`
+
+3. Install requirements with `pip install -r requirements.txt`
 
 ## Initial Setup
 
