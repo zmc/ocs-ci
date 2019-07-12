@@ -435,7 +435,7 @@ def destroy_cluster(cluster_path, log_level="DEBUG"):
 
         # Execute destroy cluster using OpenShift installer
         log.info(f"Destroying cluster defined in {cluster_path}")
-        run_cmd(destroy_cmd)
+        run_cmd(destroy_cmd, logging.INFO)
 
         # Find and delete volumes
         aws = AWS(region_name)

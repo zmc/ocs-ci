@@ -154,7 +154,8 @@ def cluster(request, log_cli_level):
     run_cmd(
         f"{installer} create cluster "
         f"--dir {cluster_path} "
-        f"--log-level {log_cli_level}"
+        f"--log-level {log_cli_level}",
+        logging.INFO
     )
 
     # Test cluster access
