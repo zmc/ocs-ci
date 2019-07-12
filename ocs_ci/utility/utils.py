@@ -349,12 +349,13 @@ def custom_ceph_config(suite_config, custom_config, custom_config_file):
     return full_custom_config
 
 
-def run_cmd(cmd, **kwargs):
+def run_cmd(cmd, stdout_log_level=logging.DEBUG, **kwargs):
     """
     Run an arbitrary command locally
 
     Args:
-        cmd (str): command to run
+        cmd (str):              Command to run
+        stdout_log_level (int): The log level to use for stdout
 
     Raises:
         CommandFailed: In case the command execution fails
@@ -377,7 +378,7 @@ def run_cmd(cmd, **kwargs):
         line = p.stdout.readline().decode()
         if line:
             out_lines.append(line)
-            log.debug(f"stdout: {line.rstrip()}")
+            log.log(stdout_log_level, f"stdout: {line.rstrip()}")
         line = p.stderr.readline().decode()
         if line:
             log.warning(f"stderr: {line.rstrip()}")
