@@ -45,6 +45,12 @@ deploy:
   stage: deploy
   script:
     - run-ci -m deployment --deploy --ocsci-conf=ocs-ci.yaml --cluster-path=cluster --collect-logs
+  after_script:
+    - pwd
+    - ls -l
+    - ls -l $CI_PROJECT_DIR
+    - "ls -l logs || true"
+    - "ls -l $CI_PROJECT_DIR/logs || true"
   artifacts:
     when: always
     paths:
